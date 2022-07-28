@@ -1,0 +1,44 @@
+*.pyc
+*.pyo
+*~
+*.swp
+*.swo
+
+# sqlite database created by django
+db.sqlite3
+
+# pycharm
+.idea
+*.iml
+
+# Visual Studio Code
+.vscode
+
+# Special directories
+tmp/*
+.pytest_cache
+.gradle/
+
+# Side effects of running the RPM builder localy.
+installation/packaging/build_zone/*
+
+# Downloaded files from Artifactory
+dev_utils/dev_common/artifactory/downloads/*
+
+# Links
+.link
+
+# Unit Test Results Output
+unit_tests_reports
+
+# Mac auto generated
+.DS_Store
+
+db_data/
+ssh_known_hosts
+
+# for virtual env
+.env
+
+# docker local volume
+.docker
