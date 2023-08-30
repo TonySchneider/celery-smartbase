@@ -11,7 +11,7 @@ setup(
         'Django~=3.2.11',
         'djangorestframework==3.13.1',
         'django-model-utils==3.1.2',
-        'django-celery-results==2.2.0',
+        'django-celery-results==2.4.0',
         'django-celery-beat==2.2.1',
         'kombu~=5.2.3',
         'celery~=5.2.3',
