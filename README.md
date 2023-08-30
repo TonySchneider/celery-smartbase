@@ -2,6 +2,18 @@
 
 `celery-smartbase` is an extension and improvement of the popular `celery` PyPI package. It provides features to avoid duplicates for tasks that are pending or running and to see the "pending" tasks as well in the "jobs" Django model when you integrate Celery with Django. Although this package is improved to work with Django, users can modify the features slightly to make it work with any Python framework, not just Django.
 
+# Table of Contents
+
+1. [Celery SmartBase](#celery-smartbase)
+2. [Features](#features)
+3. [SmartBase Class](#smartbase-class)
+4. [Requirements](#requirements)
+5. [Installation](#installation)
+6. [Usage](#usage)
+7. [Contributing](#contributing)
+8. [License](#license)
+9. [Acknowledgments](#acknowledgments)
+
 ## Features
 
 1. **Avoid Duplicate Tasks**: Prevents the creation of duplicate tasks that are either pending or running.
@@ -40,9 +52,34 @@ pip install celery-smartbase
 
 ## Usage
 
-To use the `celery-smartbase` package, you need to...
+To use the `celery-smartbase` package, you need to follow these steps:
 
-[Include examples of how to use the package here]
+1. Install the `celery-smartbase` package using pip.
+
+2. In your Django project, create a `tasks.py` file inside your app directory.
+
+3. In the `tasks.py` file, import the `SmartBase` class from the `celery_smartbase` package and define your tasks using the `SmartBase` class.
+
+Here is an example of a `tasks.py` file:
+
+```python
+from celery import shared_task
+from celery_smartbase import SmartBase
+
+@shared_task(base=SmartBase, name='add')
+def add(x, y):
+    return x + y
+```
+
+In this example, the `add` task is defined using the `@shared_task` decorator with `SmartBase` as the base class.
+
+4. Start the Celery worker to process the tasks.
+
+```
+celery -A myproject worker --loglevel=info
+```
+
+Replace `myproject` with the name of your Django project.
 
 ## Contributing
 
