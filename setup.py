@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setup(
     name='celery-smartbase',
-    version='0.3.4',
+    version='0.3.5',
     packages=find_packages(),
     install_requires=[
         'Django~=3.2.11',
