@@ -28,6 +28,7 @@ jobs:
       - name: Push changes
         run: |
           git push
+          git push --tags
       - name: Build and publish
         env:
           TWINE_USERNAME: ${{ secrets.PYPI_USERNAME }}
