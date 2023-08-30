@@ -9,3 +9,4 @@ django-celery-beat==2.2.1
 kombu~=5.2.3
 celery~=5.2.3
 
+bumpversion

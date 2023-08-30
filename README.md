@@ -1,31 +1,61 @@
-Celery Smartbase
-=================
+# Celery SmartBase
 
-Celery Smartbase is a Python package that provides solutions for common problems that arise when working with the Celery distributed task queue. In particular, Celery Smartbase solves the problem of duplicate task execution, which can occur in certain scenarios such as when workers are restarted.
+`celery-smartbase` is an extension and improvement of the popular `celery` PyPI package. It provides features to avoid duplicates for tasks that are pending or running and to see the "pending" tasks as well in the "jobs" Django model when you integrate Celery with Django. Although this package is improved to work with Django, users can modify the features slightly to make it work with any Python framework, not just Django.
 
-Celery Smartbase achieves this by providing a custom task class that overrides the default Celery task class. This custom task class includes a unique task ID generator that ensures that each task is executed only once, even if it is queued multiple times.
+## Features
 
-In addition to solving the duplicate task problem, Celery Smartbase also provides a set of base classes that can be overridden to add custom code and improve the performance of Celery. These base classes include:
+1. **Avoid Duplicate Tasks**: Prevents the creation of duplicate tasks that are either pending or running.
+2. **View Pending Tasks**: Allows you to see the "pending" tasks in the "jobs" Django model when you integrate Celery with Django.
 
-- Task: The base class for all Celery tasks.
-- TaskSet: A task set is a group of tasks that are executed together.
-- Canvas: A canvas is a group of tasks that are executed sequentially or in parallel.
-- Group: A group is a set of tasks that are executed in parallel.
+These features are developed inside an extension of the `BaseTask` class of the existing Celery Python package. The extension class is called `SmartBase`.
 
-Celery Smartbase is designed to be used with Django and requires it as a dependency. To install Celery Smartbase, simply run `pip install celery-smartbase`. Once installed, you can use the custom task class provided by Celery Smartbase by importing it in your Celery configuration file:
+## SmartBase Class
+
+The `SmartBase` class is an extension of the `BaseTask` class from the Celery package. Here is the code for the `SmartBase` class:
 
 ```python
-from celery import Celery
-from celery_smartbase import SmartTask
-
-app = Celery('tasks', broker='pyamqp://guest@localhost//')
-app.task_cls = SmartTask
+class SmartBase(BaseTask):
+...
 ```
 
-Contributing
---------
-Contributions to Celery Smartbase are welcome! If you find a bug or have an idea for a new feature, please open an issue or submit a pull request.
+[Include the full code of the SmartBase class here]
 
-License
---------
-Celery Smartbase is licensed under the MIT License. See the LICENSE file for more information.
+## Requirements
+
+- Django
+- djangorestframework
+- django-model-utils
+- django-celery-results
+- django-celery-beat
+- kombu
+- celery
+
+## Installation
+
+To install the `celery-smartbase` package, run the following command:
+
+```
+pip install celery-smartbase
+```
+
+## Usage
+
+To use the `celery-smartbase` package, you need to...
+
+[Include examples of how to use the package here]
+
+## Contributing
+
+If you would like to contribute to the `celery-smartbase` package, please...
+
+[Include information on how others can contribute to your package]
+
+## License
+
+The `celery-smartbase` package is licensed under the...
+
+[Include information about the license of your package]
+
+## Acknowledgments
+
+[Include any acknowledgments or credits you would like to include]

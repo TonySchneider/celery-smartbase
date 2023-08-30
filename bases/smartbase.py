@@ -1,39 +1,74 @@
 import logging
-from kombu import uuid
 from datetime import datetime
-
-from celery import Task as BaseTask
+from django.db.models import Q
+from kombu.utils.uuid import uuid
+from typing import Any, Dict, Tuple
+from celery.app.task import BaseTask
 from celery.result import AsyncResult
 
 from django_celery_results.models import TaskResult
 
-import django.db.models
-from django.db.models import Q
-from django.db import ProgrammingError
-
 
 class SmartBase(BaseTask):
+    """
+    SmartBase is an extension of the Celery BaseTask class that provides features to avoid duplicates
+    for tasks that are pending or running, and to see the "pending" tasks as well in the "jobs" Django model
+    when you integrate Celery with Django.
+    """
+
     def __init__(self, db_model=TaskResult):
+        """
+        Initialize SmartBaseTask celery base.
+
+        :param db_model: The database model to use for storing task results.
+        """
         logging.info("Initializing SmartBaseTask celery base ...")
-        super(SmartBase, self).__init__()
+        super().__init__()
         self.task_id = None
         self.db_model = db_model
 
     def __call__(self, *args, **kwargs):
+        """
+        Handler called when the task is called.
+
+        :param args: Positional arguments passed to the task.
+        :param kwargs: Keyword arguments passed to the task.
+        :return: The return value of the task.
+        """
         logging.info("Doing __call__ ...")
         self.task_id = self.request.id
         job = self.db_model.objects.get(task_id=self.task_id)
         job.date_started = datetime.now()
         logging.info(f"Task ({self.task_id}) Starting at {self.name} [{job.date_started}]")
         job.save()
-        return super(SmartBase, self).__call__(*args, **kwargs)
+        return super().__call__(*args, **kwargs)
 
     def run(self, *args, **kwargs):
+        """
+        The body of the task.
+
+        :param args: Positional arguments passed to the task.
+        :param kwargs: Keyword arguments passed to the task.
+        :raise NotImplementedError: This method must be implemented in subclasses.
+        """
         logging.error(f'Task tried to run: {self.name}[{self.request.id}]')
         raise NotImplementedError()
 
-    def apply_async(self, args=None, kwargs=None, task_id=None, producer=None,
-                    link=None, link_error=None, shadow=None, **options):
+    def apply_async(self, args: Tuple = None, kwargs: Dict = None, task_id: str = None, producer=None,
+                    link=None, link_error=None, shadow=None, **options) -> AsyncResult:
+        """
+        Send task message.
+
+        :param args: Positional arguments passed to the task.
+        :param kwargs: Keyword arguments passed to the task.
+        :param task_id: Unique id of the task.
+        :param producer: Message producer.
+        :param link: A callback to apply if the task completes successfully.
+        :param link_error: A callback to apply if an error occurs while executing the task.
+        :param shadow: The name of the task to use in logs and monitoring tools.
+        :param options: Additional options passed to the task.
+        :return: AsyncResult instance.
+        """
         task_id = task_id or uuid()
         logging.info(f"Task {task_id} running apply_async method...")
 
@@ -52,86 +87,63 @@ class SmartBase(BaseTask):
                                            task_kwargs=kwargs)
         job.save()
 
-        return super(SmartBase, self).apply_async(args, kwargs, task_id, producer, link, link_error, shadow, **options)
+        return super().apply_async(args, kwargs, task_id, producer, link, link_error, shadow, **options)
 
-    def before_start(self, task_id, args, kwargs):
-        """Handler called before the task starts.
+    def before_start(self, task_id: str, args: Tuple, kwargs: Dict):
+        """
+        Handler called before the task starts.
 
-        .. versionadded:: 5.2
-
-        Arguments:
-            task_id (str): Unique id of the task to execute.
-            args (Tuple): Original arguments for the task to execute.
-            kwargs (Dict): Original keyword arguments for the task to execute.
-
-        Returns:
-            None: The return value of this handler is ignored.
+        :param task_id: Unique id of the task to execute.
+        :param args: Original arguments for the task to execute.
+        :param kwargs: Original keyword arguments for the task to execute.
         """
         logging.info(f"Task ({task_id}) doing before_start...")
 
-    def on_success(self, retval, task_id, args, kwargs):
-        """Success handler.
+    def on_success(self, retval: Any, task_id: str, args: Tuple, kwargs: Dict):
+        """
+        Success handler. Run by the worker if the task executes successfully.
 
-        Run by the worker if the task executes successfully.
-
-        Arguments:
-            retval (Any): The return value of the task.
-            task_id (str): Unique id of the executed task.
-            args (Tuple): Original arguments for the executed task.
-            kwargs (Dict): Original keyword arguments for the executed task.
-
-        Returns:
-            None: The return value of this handler is ignored.
+        :param retval: The return value of the task.
+        :param task_id: Unique id of the executed task.
+        :param args: Original arguments for the executed task.
+        :param kwargs: Original keyword arguments for the executed task.
         """
         logging.info(f"Task ({task_id}) doing on_success...")
 
-    def on_retry(self, exc, task_id, args, kwargs, einfo):
-        """Retry handler.
+    def on_retry(self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict, einfo):
+        """
+        Retry handler. This is run by the worker when the task is to be retried.
 
-        This is run by the worker when the task is to be retried.
-
-        Arguments:
-            exc (Exception): The exception sent to :meth:`retry`.
-            task_id (str): Unique id of the retried task.
-            args (Tuple): Original arguments for the retried task.
-            kwargs (Dict): Original keyword arguments for the retried task.
-            einfo (~billiard.einfo.ExceptionInfo): Exception information.
-
-        Returns:
-            None: The return value of this handler is ignored.
+        :param exc: The exception sent to :meth:`retry`.
+        :param task_id: Unique id of the retried task.
+        :param args: Original arguments for the retried task.
+        :param kwargs: Original keyword arguments for the retried task.
+        :param einfo: Exception information.
         """
         logging.info(f"Task ({task_id}) doing Retry...")
 
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
-        """Error handler.
+    def on_failure(self, exc: Exception, task_id: str, args: Tuple, kwargs: Dict, einfo):
+        """
+        Error handler. This is run by the worker when the task fails.
 
-        This is run by the worker when the task fails.
-
-        Arguments:
-            exc (Exception): The exception raised by the task.
-            task_id (str): Unique id of the failed task.
-            args (Tuple): Original arguments for the task that failed.
-            kwargs (Dict): Original keyword arguments for the task that failed.
-            einfo (~billiard.einfo.ExceptionInfo): Exception information.
-
-        Returns:
-            None: The return value of this handler is ignored.
+        :param exc: The exception raised by the task.
+        :param task_id: Unique id of the failed task.
+        :param args: Original arguments for the task that failed.
+        :param kwargs: Original keyword arguments for the task that failed.
+        :param einfo: Exception information.
         """
         logging.info(f"Task ({task_id}) doing on_failure ...")
 
-    def after_return(self, status, retval, task_id, args, kwargs, einfo):
-        """Handler called after the task returns.
+    def after_return(self, status: str, retval: Any, task_id: str, args: Tuple, kwargs: Dict, einfo):
+        """
+        Handler called after the task returns.
 
-        Arguments:
-            status (str): Current task state.
-            retval (Any): Task return value/exception.
-            task_id (str): Unique id of the task.
-            args (Tuple): Original arguments for the task.
-            kwargs (Dict): Original keyword arguments for the task.
-            einfo (~billiard.einfo.ExceptionInfo): Exception information.
-
-        Returns:
-            None: The return value of this handler is ignored.
+        :param status: Current task state.
+        :param retval: Task return value/exception.
+        :param task_id: Unique id of the task.
+        :param args: Original arguments for the task.
+        :param kwargs: Original keyword arguments for the task.
+        :param einfo: Exception information.
         """
         logging.info(f"Task ({self.task_id}) doing after_return ...")
         job = self.db_model.objects.get(task_id=self.task_id)
